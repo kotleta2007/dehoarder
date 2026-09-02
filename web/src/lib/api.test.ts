@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
-import { buildScanPayload, createScan, getStatus, type ChromeTab } from './api'
+import {
+  buildScanPayload,
+  createScan,
+  createScanFromSnss,
+  getProfiles,
+  getStatus,
+  type ChromeTab,
+} from './api'
 
 describe('getStatus', () => {
   it('returns the parsed status on a 200', async () => {
@@ -107,6 +114,44 @@ describe('createScan', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(buildScanPayload(tabs)),
+      }),
+    )
+  })
+})
+
+describe('getProfiles', () => {
+  it('returns the parsed profile list', async () => {
+    const profiles = [{ dir_name: 'Default', display_name: 'Mark', current: true }]
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => profiles }),
+    )
+
+    await expect(getProfiles()).resolves.toEqual(profiles)
+  })
+})
+
+describe('createScanFromSnss', () => {
+  it('posts the chosen profile name', async () => {
+    const scan = {
+      id: 1,
+      started_at: 'now',
+      source: 'snss',
+      profile_name: 'Mark',
+      tab_count: 0,
+      tabs: [],
+    }
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 201, json: async () => scan })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(createScanFromSnss('Mark')).resolves.toEqual(scan)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/scans/snss',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile_name: 'Mark' }),
       }),
     )
   })

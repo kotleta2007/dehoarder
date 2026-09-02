@@ -1,11 +1,22 @@
 <script lang="ts">
-  import { createScan, getBridgeStatus, listTabsFromExtension, type ScanOut } from '../lib/api'
+  import {
+    createScan,
+    createScanFromSnss,
+    getBridgeStatus,
+    getProfiles,
+    listTabsFromExtension,
+    type Profile,
+    type ScanOut,
+  } from '../lib/api'
 
   let bridgeConnected = $state<boolean | null>(null)
   let extensionId = $state<string | null>(null)
   let scanning = $state(false)
   let scanError = $state<string | null>(null)
   let scan = $state<ScanOut | null>(null)
+
+  let profiles = $state<Profile[]>([])
+  let selectedProfile = $state<string | null>(null)
 
   $effect(() => {
     getBridgeStatus()
@@ -18,6 +29,18 @@
       })
   })
 
+  $effect(() => {
+    if (bridgeConnected !== false) return
+    getProfiles()
+      .then((p) => {
+        profiles = p
+        selectedProfile = p.find((x) => x.current)?.display_name ?? p[0]?.display_name ?? null
+      })
+      .catch(() => {
+        profiles = []
+      })
+  })
+
   async function scanNow() {
     if (!extensionId) return
     scanning = true
@@ -25,6 +48,18 @@
     try {
       const tabs = await listTabsFromExtension(extensionId)
       scan = await createScan(tabs)
+    } catch (err) {
+      scanError = err instanceof Error ? err.message : String(err)
+    } finally {
+      scanning = false
+    }
+  }
+
+  async function readSessionFile() {
+    scanning = true
+    scanError = null
+    try {
+      scan = await createScanFromSnss(selectedProfile)
     } catch (err) {
       scanError = err instanceof Error ? err.message : String(err)
     } finally {
@@ -58,6 +93,19 @@
         </li>
       </ol>
     </div>
+
+    <div class="snss">
+      <label for="profile-select">Profile</label>
+      <select id="profile-select" bind:value={selectedProfile} disabled={profiles.length === 0}>
+        {#each profiles as profile (profile.dir_name)}
+          <option value={profile.display_name}>{profile.display_name}</option>
+        {/each}
+      </select>
+      <button type="button" disabled={scanning || !selectedProfile} onclick={readSessionFile}>
+        {scanning ? 'Reading…' : 'Read session file'}
+      </button>
+      <p class="hint">Read-only inventory. Closing tabs still needs the extension.</p>
+    </div>
   {:else if bridgeConnected === true}
     <div class="banner ok">Extension connected{extensionId ? ` (${extensionId})` : ''}.</div>
     <button type="button" disabled={scanning} onclick={scanNow}>
@@ -89,6 +137,20 @@
 
   .banner.ok {
     color: var(--accent);
+  }
+
+  .snss {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .hint {
+    flex-basis: 100%;
+    font-size: 0.85rem;
+    color: var(--text);
+    opacity: 0.75;
   }
 
   .error {

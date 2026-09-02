@@ -78,9 +78,28 @@ def db_init() -> None:
 
 @app.command()
 def run(stage: Stage, limit: int | None = typer.Option(None, "--limit")) -> None:
-    """Run a single pipeline stage non-interactively. Stub for now."""
+    """Run a single pipeline stage non-interactively."""
+    if stage == Stage.scan_snss:
+        _run_scan_snss()
+        return
+
     typer.echo(f"run {stage.value}: not implemented yet", err=True)
     raise typer.Exit(code=2)
+
+
+def _run_scan_snss() -> None:
+    from fastapi import HTTPException
+
+    from dehoarder.api.routes.scans import SnssScanIn, create_scan_from_snss
+
+    try:
+        scan = create_scan_from_snss(SnssScanIn(profile_name=None))
+    except HTTPException as exc:
+        typer.echo(str(exc.detail), err=True)
+        raise typer.Exit(code=1) from None
+
+    typer.echo(f"profile: {scan.profile_name}")
+    typer.echo(f"open tabs: {scan.tab_count}")
 
 
 if __name__ == "__main__":

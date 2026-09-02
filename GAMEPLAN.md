@@ -76,7 +76,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `ingest/snss.py`: newest `Sessions/Session_*` (+ `Tabs_*`), magic/version check, iterate commands (UpdateTabNavigation, SetSelectedNavigationIndex, TabClosed, WindowClosed, SetTabWindow) → open tabs with selected entry. Read whole file into memory; retry once on short read; **never opens for writing**. `POST /scans/snss {profile_name?}` and `run scan-snss`; Tabs view: "Read session file" with profile dropdown by name, shown when no extension is detected, with a note that closing needs the extension.
 **Tests**: synthetic fixture built in-test + anonymised real session (ask at STOP); open-mode assertion (`mock.patch("builtins.open")` sees only `"rb"`).
 **Commit**: `feat(ingest): read-only snss parser and fallback scan`
-- [ ] Done
+- [x] Done
 
 **STOP** — real scan on the operator's machine via extension; compare with SNSS count. Merge.
 

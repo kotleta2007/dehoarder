@@ -12,9 +12,13 @@ import sys
 from pathlib import Path
 
 
-def _run(*args: str, db_path: Path) -> subprocess.CompletedProcess[str]:
+def _run(
+    *args: str, db_path: Path, thorium_dir: Path | None = None
+) -> subprocess.CompletedProcess[str]:
     env = dict(os.environ)
     env["DB_PATH"] = str(db_path)
+    if thorium_dir is not None:
+        env["THORIUM_DIR"] = str(thorium_dir)
     return subprocess.run(
         [sys.executable, "-m", "dehoarder.cli", *args],
         capture_output=True,
@@ -69,3 +73,27 @@ def test_serve_help_lists_port_and_no_open(tmp_path: Path) -> None:
     assert result.returncode == 0
     assert "--port" in result.stdout
     assert "--no-open" in result.stdout
+
+
+FIXTURE_THORIUM_DIR = Path(__file__).parent / "fixtures" / "thorium_with_session"
+
+
+def test_run_scan_snss(tmp_path: Path) -> None:
+    db_path = tmp_path / "dehoarder.db"
+    _run("db", "init", db_path=db_path)
+
+    result = _run("run", "scan-snss", db_path=db_path, thorium_dir=FIXTURE_THORIUM_DIR)
+    assert result.returncode == 0
+    assert "profile: Test Profile" in result.stdout
+    assert "open tabs: 2" in result.stdout
+
+
+def test_run_scan_snss_with_no_profile_exits_1(tmp_path: Path) -> None:
+    db_path = tmp_path / "dehoarder.db"
+    _run("db", "init", db_path=db_path)
+
+    result = _run(
+        "run", "scan-snss", db_path=db_path, thorium_dir=tmp_path / "no-such-thorium-dir"
+    )
+    assert result.returncode == 1
+    assert "no thorium profile found" in result.stderr

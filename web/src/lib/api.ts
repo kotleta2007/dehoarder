@@ -80,6 +80,7 @@ export interface ScanOut {
   id: number
   started_at: string
   source: string
+  profile_name: string | null
   tab_count: number
   tabs: TabOut[]
 }
@@ -112,4 +113,30 @@ export function listTabsFromExtension(extensionId: string): Promise<ChromeTab[]>
       resolve(response)
     })
   })
+}
+
+export interface Profile {
+  dir_name: string
+  display_name: string
+  current: boolean
+}
+
+export async function getProfiles(): Promise<Profile[]> {
+  const response = await fetch('/api/v1/profiles')
+  if (!response.ok) {
+    throw new Error(`GET /api/v1/profiles failed: ${response.status}`)
+  }
+  return (await response.json()) as Profile[]
+}
+
+export async function createScanFromSnss(profileName: string | null): Promise<ScanOut> {
+  const response = await fetch('/api/v1/scans/snss', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profile_name: profileName }),
+  })
+  if (!response.ok) {
+    throw new Error(`POST /api/v1/scans/snss failed: ${response.status}`)
+  }
+  return (await response.json()) as ScanOut
 }

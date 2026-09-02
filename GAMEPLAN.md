@@ -46,7 +46,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `web/` Vite + Svelte 5 + TS; `npm run build` → `web/dist`; `make dev` runs vite + uvicorn with proxy. Top bar with stage stepper (driven by `/status`) and nav Tabs · Progress · Graph · Plan (empty pages). Minimal styling, no component library.
 **Tests**: vitest for the API client; eslint/prettier in `make check`.
 **Commit**: `feat(web): svelte scaffold, stepper, navigation`
-- [ ] Done
+- [x] Done
 
 **STOP** — `dehoarder serve` opens an empty app. `make check` green. Merge.
 

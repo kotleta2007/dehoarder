@@ -49,7 +49,9 @@ def test_fake_stage_reports_progress_and_completes(client: TestClient) -> None:
     response = client.post("/api/v1/jobs/scan")
     assert response.status_code == 201
     job_id = response.json()["id"]
-    assert response.json()["status"] == "running"
+    # The background thread may already have finished by the time we read
+    # this response, so only "running" or "done" are valid here.
+    assert response.json()["status"] in ("running", "done")
 
     final = None
     for _ in range(100):

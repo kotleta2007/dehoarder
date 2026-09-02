@@ -1,4 +1,4 @@
-"""CLI tests: `--help`, `status` on an empty DB, and stage/serve stubs.
+"""CLI tests: `--help`, `status` on an empty DB, and the `run` stage stub.
 
 Runs the CLI as a subprocess so each test gets its own SQLite file via the
 `DB_PATH` env var, matching how an operator actually invokes it.
@@ -64,6 +64,8 @@ def test_run_unknown_stage_is_usage_error(tmp_path: Path) -> None:
     assert result.returncode != 0
 
 
-def test_serve_stub_exits_2(tmp_path: Path) -> None:
-    result = _run("serve", db_path=tmp_path / "dehoarder.db")
-    assert result.returncode == 2
+def test_serve_help_lists_port_and_no_open(tmp_path: Path) -> None:
+    result = _run("serve", "--help", db_path=tmp_path / "dehoarder.db")
+    assert result.returncode == 0
+    assert "--port" in result.stdout
+    assert "--no-open" in result.stdout

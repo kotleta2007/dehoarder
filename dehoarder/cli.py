@@ -5,8 +5,12 @@ runner exist, per CLAUDE.md. None of them ever prompt.
 """
 
 import enum
+import threading
+import time
+import webbrowser
 
 import typer
+import uvicorn
 from sqlalchemy.exc import OperationalError
 
 from dehoarder.config import settings
@@ -30,9 +34,20 @@ class Stage(enum.StrEnum):
 
 @app.command()
 def serve(port: int = settings.port, no_open: bool = False) -> None:
-    """Start the API + web app and open the browser."""
-    typer.echo("serve: not implemented yet (see GAMEPLAN Step 0.4)", err=True)
-    raise typer.Exit(code=2)
+    """Start the API + web app, binding 127.0.0.1, and open the browser."""
+    from dehoarder.api.app import app as fastapi_app
+
+    url = f"http://127.0.0.1:{port}"
+
+    if not no_open:
+
+        def _open_when_ready() -> None:
+            time.sleep(1.0)
+            webbrowser.open(url)
+
+        threading.Thread(target=_open_when_ready, daemon=True).start()
+
+    uvicorn.run(fastapi_app, host="127.0.0.1", port=port)
 
 
 @app.command()

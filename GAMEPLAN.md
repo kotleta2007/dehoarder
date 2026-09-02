@@ -40,7 +40,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `api/app.py` (bind `127.0.0.1`, static mount of `web/dist`), `GET /api/v1/status`; `jobs/runner.py`: run a stage function in a background thread, persist `job` rows with `progress` JSON, `POST /jobs/{stage}`, `GET /jobs/{id}`, `GET /jobs`; one job at a time. `serve` opens the browser (`webbrowser.open`) unless `--no-open`.
 **Tests**: TestClient; a fake stage reports progress and completes; second job while one runs → 409.
 **Commit**: `feat(api): app shell, status route, background job runner`
-- [ ] Done
+- [x] Done
 
 ### Step 0.5 — Web scaffold + navigation
 **What**: `web/` Vite + Svelte 5 + TS; `npm run build` → `web/dist`; `make dev` runs vite + uvicorn with proxy. Top bar with stage stepper (driven by `/status`) and nav Tabs · Progress · Graph · Plan (empty pages). Minimal styling, no component library.

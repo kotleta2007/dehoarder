@@ -34,8 +34,23 @@ def make_engine(db_path: str | None = None) -> Engine:
     return engine
 
 
-engine = make_engine()
-SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+def configure(db_path: str | None = None) -> Engine:
+    """(Re)bind the module-level `engine`/`SessionLocal` to a database.
+
+    Callers that need process-wide code (the API, the job runner) to see a
+    different database — chiefly tests — call this instead of importing a
+    session factory directly, since a plain `from ... import SessionLocal`
+    freezes the reference at import time and would miss the rebind.
+    """
+    global engine, SessionLocal
+    engine = make_engine(db_path)
+    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+    return engine
+
+
+engine: Engine
+SessionLocal: sessionmaker[Session]
+configure()
 
 
 @contextmanager

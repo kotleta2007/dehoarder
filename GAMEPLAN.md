@@ -28,7 +28,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `db/session.py` (WAL, FK on), `db/models.py` with **all** tables from CLAUDE.md incl. `job` and `bridge`, `db/migrate.py` (`create_all()` + `schema_version`), `dehoarder db init`.
 **Tests**: fresh DB creates all tables; round-trips; `migrate()` idempotent.
 **Commit**: `feat(db): sqlite models and schema init`
-- [ ] Done
+- [x] Done
 
 ### Step 0.3 — CLI + `status`
 **What**: `cli.py`: `serve` (stub), `status` (implemented: counts per stage), `db init`, `run <stage>` (stubs, exit 2). No prompts anywhere.

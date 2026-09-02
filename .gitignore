@@ -1,1 +1,26 @@
 .env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+uv.lock.tmp
+
+# App-generated state (never checked in)
+dehoarder.db
+dehoarder.db-*
+page_cache/
+archive/
+data/topics.proposed.yaml
+
+# Web
+web/node_modules/
+web/dist/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/

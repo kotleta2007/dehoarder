@@ -10,10 +10,10 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 
 ## Pre-flight
 
-- [ ] Read `CLAUDE.md` end to end
-- [ ] `uv`, Python 3.12, Node 20+ available
-- [ ] `~/.config/thorium/` exists on the operator's machine (confirm; set default in `config.py`)
-- [ ] `.env` has `OPENROUTER_API_KEY`; models default to the ids in CLAUDE.md
+- [x] Read `CLAUDE.md` end to end
+- [x] `uv`, Python 3.12, Node 20+ available
+- [x] `~/.config/thorium/` exists on the operator's machine (confirm; set default in `config.py`)
+- [x] `.env` has `OPENROUTER_API_KEY`; models default to the ids in CLAUDE.md
 
 ---
 
@@ -22,7 +22,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 ### Step 0.1 — Project scaffold
 **What**: `pyproject.toml` (uv; fastapi, uvicorn, sqlalchemy, pydantic-settings, typer, httpx, selectolax, extruct, polars, pyyaml, pytest, pytest-asyncio, respx, ruff, mypy), `dehoarder/config.py` (db path, thorium dir, page cache, archive dir, OpenRouter key + model ids, language modifiers, link thresholds, plan weights, port), `Makefile` (`dev`, `check`, `test`, `build-web`), `.env.example`, `.gitignore`, `README.md` stub.
 **Commit**: `chore(repo): scaffold uv project, config, makefile`
-- [ ] Done
+- [x] Done
 
 ### Step 0.2 — SQLite schema
 **What**: `db/session.py` (WAL, FK on), `db/models.py` with **all** tables from CLAUDE.md incl. `job` and `bridge`, `db/migrate.py` (`create_all()` + `schema_version`), `dehoarder db init`.

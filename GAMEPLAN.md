@@ -70,7 +70,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `ingest/profiles.py`: Thorium dir; `Local State` → `profile.last_used`, `profile.info_cache` (dir → human name); `list_profiles()`, `current_profile()`; lookup by name only.
 **Tests**: fixture `Local State` with three named profiles.
 **Commit**: `feat(ingest): thorium profile detection by name`
-- [ ] Done
+- [x] Done
 
 ### Step 1.4 — SNSS read-only parser + fallback scan
 **What**: `ingest/snss.py`: newest `Sessions/Session_*` (+ `Tabs_*`), magic/version check, iterate commands (UpdateTabNavigation, SetSelectedNavigationIndex, TabClosed, WindowClosed, SetTabWindow) → open tabs with selected entry. Read whole file into memory; retry once on short read; **never opens for writing**. `POST /scans/snss {profile_name?}` and `run scan-snss`; Tabs view: "Read session file" with profile dropdown by name, shown when no extension is detected, with a note that closing needs the extension.

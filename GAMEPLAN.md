@@ -64,7 +64,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `POST /scans` accepts the tab list → `scan(source=extension)` + `tab` rows (domain via `urlparse().hostname` minus `www.`); Tabs view: extension-detected banner, **Scan now** → `sendMessage(list_tabs)` → `POST /scans` → renders raw inventory with counts. Not-detected banner with install steps.
 **Tests**: API test; vitest for payload normalisation.
 **Commit**: `feat(ingest): scan from extension and tabs view`
-- [ ] Done
+- [x] Done
 
 ### Step 1.3 — Profile detection (fallback)
 **What**: `ingest/profiles.py`: Thorium dir; `Local State` → `profile.last_used`, `profile.info_cache` (dir → human name); `list_profiles()`, `current_profile()`; lookup by name only.

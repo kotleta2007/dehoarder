@@ -20,6 +20,9 @@ data/topics.proposed.yaml
 web/node_modules/
 web/dist/
 
+# Extension
+extension/node_modules/
+
 # Editors / OS
 .DS_Store
 .idea/

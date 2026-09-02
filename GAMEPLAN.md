@@ -58,7 +58,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `extension/manifest.json` (MV3; `tabs`, `storage`; `externally_connectable.matches: ["http://127.0.0.1:8765/*"]`; host permission same origin), `background.js`: on install/startup `POST /bridge/hello {extension_id, version}`; `chrome.runtime.onMessageExternal` handling `list_tabs` (`chrome.tabs.query({})` → normalised list), `close_tabs`, `open_tabs` (batch sizes and gaps per CLAUDE.md). Server: `POST /bridge/hello`, `GET /bridge/status` (`bridge` table). README: load-unpacked steps.
 **Tests**: API tests for hello/status; extension logic isolated into pure functions unit-tested with a fake `chrome` object (vitest under `extension/tests/`).
 **Commit**: `feat(ext): mv3 extension with external messaging and bridge hello`
-- [ ] Done
+- [x] Done
 
 ### Step 1.2 — Scan from extension (API + Tabs view)
 **What**: `POST /scans` accepts the tab list → `scan(source=extension)` + `tab` rows (domain via `urlparse().hostname` minus `www.`); Tabs view: extension-detected banner, **Scan now** → `sendMessage(list_tabs)` → `POST /scans` → renders raw inventory with counts. Not-detected banner with install steps.

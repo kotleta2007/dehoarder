@@ -10,10 +10,10 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 
 ## Pre-flight
 
-- [ ] Read `CLAUDE.md` end to end
-- [ ] `uv`, Python 3.12, Node 20+ available
-- [ ] `~/.config/thorium/` exists on the operator's machine (confirm; set default in `config.py`)
-- [ ] `.env` has `OPENROUTER_API_KEY`; models default to the ids in CLAUDE.md
+- [x] Read `CLAUDE.md` end to end
+- [x] `uv`, Python 3.12, Node 20+ available
+- [x] `~/.config/thorium/` exists on the operator's machine (confirm; set default in `config.py`)
+- [x] `.env` has `OPENROUTER_API_KEY`; models default to the ids in CLAUDE.md
 
 ---
 
@@ -22,31 +22,31 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 ### Step 0.1 — Project scaffold
 **What**: `pyproject.toml` (uv; fastapi, uvicorn, sqlalchemy, pydantic-settings, typer, httpx, selectolax, extruct, polars, pyyaml, pytest, pytest-asyncio, respx, ruff, mypy), `dehoarder/config.py` (db path, thorium dir, page cache, archive dir, OpenRouter key + model ids, language modifiers, link thresholds, plan weights, port), `Makefile` (`dev`, `check`, `test`, `build-web`), `.env.example`, `.gitignore`, `README.md` stub.
 **Commit**: `chore(repo): scaffold uv project, config, makefile`
-- [ ] Done
+- [x] Done
 
 ### Step 0.2 — SQLite schema
 **What**: `db/session.py` (WAL, FK on), `db/models.py` with **all** tables from CLAUDE.md incl. `job` and `bridge`, `db/migrate.py` (`create_all()` + `schema_version`), `dehoarder db init`.
 **Tests**: fresh DB creates all tables; round-trips; `migrate()` idempotent.
 **Commit**: `feat(db): sqlite models and schema init`
-- [ ] Done
+- [x] Done
 
 ### Step 0.3 — CLI + `status`
 **What**: `cli.py`: `serve` (stub), `status` (implemented: counts per stage), `db init`, `run <stage>` (stubs, exit 2). No prompts anywhere.
 **Tests**: `status` on empty DB; `--help`.
 **Commit**: `feat(cli): typer app with status command`
-- [ ] Done
+- [x] Done
 
 ### Step 0.4 — FastAPI shell + job runner
 **What**: `api/app.py` (bind `127.0.0.1`, static mount of `web/dist`), `GET /api/v1/status`; `jobs/runner.py`: run a stage function in a background thread, persist `job` rows with `progress` JSON, `POST /jobs/{stage}`, `GET /jobs/{id}`, `GET /jobs`; one job at a time. `serve` opens the browser (`webbrowser.open`) unless `--no-open`.
 **Tests**: TestClient; a fake stage reports progress and completes; second job while one runs → 409.
 **Commit**: `feat(api): app shell, status route, background job runner`
-- [ ] Done
+- [x] Done
 
 ### Step 0.5 — Web scaffold + navigation
 **What**: `web/` Vite + Svelte 5 + TS; `npm run build` → `web/dist`; `make dev` runs vite + uvicorn with proxy. Top bar with stage stepper (driven by `/status`) and nav Tabs · Progress · Graph · Plan (empty pages). Minimal styling, no component library.
 **Tests**: vitest for the API client; eslint/prettier in `make check`.
 **Commit**: `feat(web): svelte scaffold, stepper, navigation`
-- [ ] Done
+- [x] Done
 
 **STOP** — `dehoarder serve` opens an empty app. `make check` green. Merge.
 

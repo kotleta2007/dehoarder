@@ -34,7 +34,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `cli.py`: `serve` (stub), `status` (implemented: counts per stage), `db init`, `run <stage>` (stubs, exit 2). No prompts anywhere.
 **Tests**: `status` on empty DB; `--help`.
 **Commit**: `feat(cli): typer app with status command`
-- [ ] Done
+- [x] Done
 
 ### Step 0.4 — FastAPI shell + job runner
 **What**: `api/app.py` (bind `127.0.0.1`, static mount of `web/dist`), `GET /api/v1/status`; `jobs/runner.py`: run a stage function in a background thread, persist `job` rows with `progress` JSON, `POST /jobs/{stage}`, `GET /jobs/{id}`, `GET /jobs`; one job at a time. `serve` opens the browser (`webbrowser.open`) unless `--no-open`.

@@ -5,14 +5,14 @@ installed in. Loaded once, manually — there is no store listing.
 
 ## Load it (Thorium)
 
-1. Open `thorium://extensions`.
+1. Open `chromium://extensions`.
 2. Turn on **Developer mode** (top right).
 3. Click **Load unpacked** and select this `extension/` directory.
-4. Confirm it's running: open `thorium://extensions` and check the service
+4. Confirm it's running: open `chromium://extensions` and check the service
    worker is active, or watch the Progress view's bridge banner in the web
    app after running `dehoarder serve`.
 
-Reload the extension from `thorium://extensions` after editing
+Reload the extension from `chromium://extensions` after editing
 `background.js` or `manifest.json`.
 
 ## Testing

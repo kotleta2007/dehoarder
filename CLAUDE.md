@@ -121,7 +121,7 @@ After the operator clicks **Close approved**, stages 3→4→5→6→7 run autom
 
 ### Stage 1 — scan
 
-**Extension.** Loaded once (`thorium://extensions` → Developer mode → Load unpacked → `extension/`). `manifest.json`: permissions `tabs`, `storage`; `externally_connectable.matches = ["http://127.0.0.1:8765/*"]`; host permission for the same origin. On install/startup the service worker `POST`s `{extension_id, version}` to `/bridge/hello` so the app knows how to reach it. The web app talks to it with `chrome.runtime.sendMessage(extension_id, {type, payload})`:
+**Extension.** Loaded once (`chromium://extensions` → Developer mode → Load unpacked → `extension/`). `manifest.json`: permissions `tabs`, `storage`; `externally_connectable.matches = ["http://127.0.0.1:8765/*"]`; host permission for the same origin. On install/startup the service worker `POST`s `{extension_id, version}` to `/bridge/hello` so the app knows how to reach it. The web app talks to it with `chrome.runtime.sendMessage(extension_id, {type, payload})`:
 
 | Message | Extension does | Notes |
 |---|---|---|

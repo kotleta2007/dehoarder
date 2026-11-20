@@ -67,13 +67,20 @@ export function buildScanPayload(tabs: ChromeTab[]): ScanPayload {
   }
 }
 
+export type Classification = 'known_shop' | 'unknown_book' | 'not_book'
+export type Decision = 'close' | 'keep' | 'pending'
+
 export interface TabOut {
   id: number
   url: string
   title: string | null
   domain: string
   discarded: boolean
-  decision: string
+  decision: Decision
+  classification: Classification | null
+  shop: string | null
+  shop_name: string | null
+  closed_at: string | null
 }
 
 export interface ScanOut {
@@ -83,6 +90,75 @@ export interface ScanOut {
   profile_name: string | null
   tab_count: number
   tabs: TabOut[]
+  classify_job_id: number | null
+}
+
+export interface Job {
+  id: number
+  kind: string
+  status: 'running' | 'done' | 'failed'
+  stage: string | null
+  progress: Record<string, unknown>
+  error: string | null
+}
+
+async function send<T>(method: string, url: string, body?: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  if (!response.ok) {
+    let detail = ''
+    try {
+      detail = ((await response.json()) as { detail?: string }).detail ?? ''
+    } catch {
+      // body was not JSON; the status code is enough
+    }
+    throw new Error(`${method} ${url} failed: ${response.status}${detail ? ` — ${detail}` : ''}`)
+  }
+  return (await response.json()) as T
+}
+
+export function getTabs(scanId: number): Promise<TabOut[]> {
+  return send('GET', `/api/v1/tabs?scan=${scanId}`)
+}
+
+export function setTabDecision(tabId: number, decision: Decision): Promise<TabOut> {
+  return send('PATCH', `/api/v1/tabs/${tabId}`, { decision })
+}
+
+/** Set the decision for every open tab of a scan in one shop or on one domain. */
+export function setTabsDecision(
+  scanId: number,
+  filter: { shop: string } | { domain: string },
+  decision: Decision,
+): Promise<{ updated: number }> {
+  const params = new URLSearchParams({ scan: String(scanId), ...filter })
+  return send('PATCH', `/api/v1/tabs?${params.toString()}`, { decision })
+}
+
+export interface Shop {
+  id: number
+  slug: string
+  name: string
+  domains: string[]
+  kind: string
+  currency: string | null
+  extractor: string | null
+  learned: boolean
+}
+
+export function learnShop(domain: string, name = ''): Promise<Shop> {
+  return send('POST', '/api/v1/shops/learn', { domain, name })
+}
+
+export function startJob(kind: string): Promise<Job> {
+  return send('POST', `/api/v1/jobs/${kind}`)
+}
+
+export function getJob(jobId: number): Promise<Job> {
+  return send('GET', `/api/v1/jobs/${jobId}`)
 }
 
 export async function createScan(tabs: ChromeTab[]): Promise<ScanOut> {

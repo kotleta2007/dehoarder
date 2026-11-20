@@ -1,5 +1,7 @@
 """Shop routes: list the registry, and learn a new shop from an unknown
-domain ("Learn & close" in the Tabs view).
+domain ("Learn & close" in the Tabs view). Learning also re-files that
+domain's `unknown_book` tabs as `known_shop`; the Tabs view then sets their
+decision with `PATCH /tabs?scan=&shop=`.
 
 Both sync `data/shops.yaml` into the `shop` table first, so operator edits
 to the YAML show up without a restart.
@@ -13,6 +15,7 @@ from sqlalchemy import select
 
 import dehoarder.db.session as db_session
 from dehoarder.classify import registry
+from dehoarder.classify.classify import attach_learned_shop
 from dehoarder.db.models import Shop, ShopKind
 
 router = APIRouter(prefix="/api/v1/shops", tags=["shops"])
@@ -69,5 +72,7 @@ def learn_shop(payload: LearnIn) -> ShopOut:
     with db_session.SessionLocal() as session:
         registry.sync(session, registry.load())
         session.commit()
+    attach_learned_shop(entry)
+    with db_session.SessionLocal() as session:
         shop = session.scalars(select(Shop).where(Shop.slug == entry.slug)).one()
         return _serialize(shop)

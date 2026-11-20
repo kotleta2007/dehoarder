@@ -240,7 +240,7 @@ source           id, book_id, tab_id?, shop_id, url, price?, currency?, availabi
 edge             id, src_book_id, dst_book_id, type, weight, meta (json), cross_lane
 reading_plan     id, created_at, target, tol, horizon, seeds (json), warnings (json)
 plan_item        id, plan_id, lane, position, book_id, reason
-job              id, kind (chain|scan|close|process|tag|link|plan), status, stage, progress (json), error?, started_at, finished_at
+job              id, kind (chain|scan|classify|close|process|tag|link|plan), status, stage, progress (json), error?, started_at, finished_at
 llm_call         id, stage, model, prompt_hash, input_tokens, output_tokens, cost_usd, response?, created_at
 bridge           extension_id, version, last_seen
 ```

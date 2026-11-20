@@ -106,7 +106,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `classify/classify.py::classify_scan()` (registry → rules → LLM) as a job (`POST /jobs/classify`, auto-triggered after a scan); sets `classification` and default `decision` (known → close, unknown → pending, not_book → keep). `PATCH /tabs/{id}`, `PATCH /tabs?scan=&shop=`. Tabs view: three groups, per-shop keep toggle, per-unknown-domain **Learn & close** / **Keep**, collapsed non-book group, **Close approved (N)** button (disabled until no `pending` remain).
 **Tests**: API over fixture scan; vitest for grouping and button state.
 **Commit**: `feat(classify): classify job and review ui`
-- [ ] Done
+- [x] Done
 
 ### Step 2.5 — Archive
 **What**: `ingest/archive.py`: `archive(scan_id)` appends to `archive/closed-<scan_id>.jsonl`, sets `archived_at`; append-only, idempotent; `POST /scans/{id}/archive`.

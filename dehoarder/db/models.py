@@ -74,6 +74,7 @@ class EdgeType(enum.StrEnum):
 class JobKind(enum.StrEnum):
     chain = "chain"
     scan = "scan"
+    classify = "classify"
     close = "close"
     process = "process"
     tag = "tag"

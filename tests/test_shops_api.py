@@ -1,22 +1,10 @@
-"""GET /api/v1/shops and POST /api/v1/shops/learn."""
+"""GET /api/v1/shops and POST /api/v1/shops/learn (registry copy from conftest)."""
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
-import pytest
 from fastapi.testclient import TestClient
-
-from dehoarder.config import DATA_DIR, settings
-
-
-@pytest.fixture(autouse=True)
-def _shops_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    path = tmp_path / "shops.yaml"
-    shutil.copy(DATA_DIR / "shops.yaml", path)
-    monkeypatch.setattr(settings, "shops_file", path)
-    return path
 
 
 def test_get_shops_returns_seed_in_file_order(client: TestClient) -> None:
@@ -28,7 +16,7 @@ def test_get_shops_returns_seed_in_file_order(client: TestClient) -> None:
     assert shops[0]["domains"] == ["amazon.com", "amazon.de", "amazon.co.uk", "amazon.fr"]
 
 
-def test_learn_adds_shop_and_writes_yaml(client: TestClient, _shops_file: Path) -> None:
+def test_learn_adds_shop_and_writes_yaml(client: TestClient, shops_file: Path) -> None:
     response = client.post(
         "/api/v1/shops/learn", json={"domain": "www.labirint.ru", "name": "Labirint"}
     )
@@ -38,7 +26,7 @@ def test_learn_adds_shop_and_writes_yaml(client: TestClient, _shops_file: Path) 
     assert shop["learned"] is True
     assert shop["kind"] == "bookshop"
 
-    assert "labirint.ru" in _shops_file.read_text(encoding="utf-8")
+    assert "labirint.ru" in shops_file.read_text(encoding="utf-8")
     slugs = [s["slug"] for s in client.get("/api/v1/shops").json()]
     assert slugs[-1] == "labirint"
     assert len(slugs) == 11

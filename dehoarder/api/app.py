@@ -12,8 +12,11 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from dehoarder.api.routes import bridge, jobs, profiles, scans, shops, status
+from dehoarder.jobs.stages import register_all
 
 WEB_DIST = Path(__file__).resolve().parent.parent.parent / "web" / "dist"
+
+register_all()
 
 app = FastAPI(title="dehoarder")
 app.include_router(status.router)

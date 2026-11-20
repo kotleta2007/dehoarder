@@ -100,7 +100,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `llm/client.py`: OpenAI-compatible chat + embeddings against OpenRouter; `complete(prompt_name, variables, tier, schema, effort=None)`; prompts from `llm/prompts/*.md`; cache by prompt hash in `llm_call` with tokens/cost; `embed(texts)` batched 50. `classify/llm.py`: one cheap call per unknown domain over ≤10 samples → `{is_bookshop, shop_name, kind, confidence}`. Prompt `classify_domain.md`.
 **Tests**: fake transport; cache hit skips call; classifier mapping.
 **Commit**: `feat(classify): openrouter client and unknown-domain classifier`
-- [ ] Done
+- [x] Done
 
 ### Step 2.4 — Classify stage + review UI
 **What**: `classify/classify.py::classify_scan()` (registry → rules → LLM) as a job (`POST /jobs/classify`, auto-triggered after a scan); sets `classification` and default `decision` (known → close, unknown → pending, not_book → keep). `PATCH /tabs/{id}`, `PATCH /tabs?scan=&shop=`. Tabs view: three groups, per-shop keep toggle, per-unknown-domain **Learn & close** / **Keep**, collapsed non-book group, **Close approved (N)** button (disabled until no `pending` remain).

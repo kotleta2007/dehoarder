@@ -10,7 +10,7 @@ from __future__ import annotations
 import enum
 from datetime import datetime
 
-from sqlalchemy import JSON, Enum, ForeignKey, UniqueConstraint, func
+from sqlalchemy import JSON, Enum, ForeignKey, Text, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -265,10 +265,13 @@ class LlmCall(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     stage: Mapped[str]
     model: Mapped[str]
-    prompt_hash: Mapped[str]
+    prompt_hash: Mapped[str] = mapped_column(index=True)
     input_tokens: Mapped[int]
     output_tokens: Mapped[int]
     cost_usd: Mapped[float]
+    # Raw completion text; a later call with the same prompt_hash reuses it.
+    # NULL for embedding calls, which are logged for spend only.
+    response: Mapped[str | None] = mapped_column(Text, default=None)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
 

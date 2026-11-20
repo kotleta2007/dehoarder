@@ -58,25 +58,25 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `extension/manifest.json` (MV3; `tabs`, `storage`; `externally_connectable.matches: ["http://127.0.0.1:8765/*"]`; host permission same origin), `background.js`: on install/startup `POST /bridge/hello {extension_id, version}`; `chrome.runtime.onMessageExternal` handling `list_tabs` (`chrome.tabs.query({})` → normalised list), `close_tabs`, `open_tabs` (batch sizes and gaps per CLAUDE.md). Server: `POST /bridge/hello`, `GET /bridge/status` (`bridge` table). README: load-unpacked steps.
 **Tests**: API tests for hello/status; extension logic isolated into pure functions unit-tested with a fake `chrome` object (vitest under `extension/tests/`).
 **Commit**: `feat(ext): mv3 extension with external messaging and bridge hello`
-- [ ] Done
+- [x] Done
 
 ### Step 1.2 — Scan from extension (API + Tabs view)
 **What**: `POST /scans` accepts the tab list → `scan(source=extension)` + `tab` rows (domain via `urlparse().hostname` minus `www.`); Tabs view: extension-detected banner, **Scan now** → `sendMessage(list_tabs)` → `POST /scans` → renders raw inventory with counts. Not-detected banner with install steps.
 **Tests**: API test; vitest for payload normalisation.
 **Commit**: `feat(ingest): scan from extension and tabs view`
-- [ ] Done
+- [x] Done
 
 ### Step 1.3 — Profile detection (fallback)
 **What**: `ingest/profiles.py`: Thorium dir; `Local State` → `profile.last_used`, `profile.info_cache` (dir → human name); `list_profiles()`, `current_profile()`; lookup by name only.
 **Tests**: fixture `Local State` with three named profiles.
 **Commit**: `feat(ingest): thorium profile detection by name`
-- [ ] Done
+- [x] Done
 
 ### Step 1.4 — SNSS read-only parser + fallback scan
 **What**: `ingest/snss.py`: newest `Sessions/Session_*` (+ `Tabs_*`), magic/version check, iterate commands (UpdateTabNavigation, SetSelectedNavigationIndex, TabClosed, WindowClosed, SetTabWindow) → open tabs with selected entry. Read whole file into memory; retry once on short read; **never opens for writing**. `POST /scans/snss {profile_name?}` and `run scan-snss`; Tabs view: "Read session file" with profile dropdown by name, shown when no extension is detected, with a note that closing needs the extension.
 **Tests**: synthetic fixture built in-test + anonymised real session (ask at STOP); open-mode assertion (`mock.patch("builtins.open")` sees only `"rb"`).
 **Commit**: `feat(ingest): read-only snss parser and fallback scan`
-- [ ] Done
+- [x] Done
 
 **STOP** — real scan on the operator's machine via extension; compare with SNSS count. Merge.
 

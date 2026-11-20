@@ -33,7 +33,7 @@ Adapted from Gourze, our orchestration standard. Not optional.
 2. **Update `GAMEPLAN.md` in the same commit as the work itself.** Checking off a step (`- [ ]` → `- [x]`) is part of that step's diff. A commit that completes a step but does not tick it is incomplete. A tick without the work is a lie.
 3. **Atomic conventional commits.** One logical change per commit. `feat(<area>): …`, `fix(<area>): …`, `test(<area>): …`, `chore(<area>): …`, `docs(<area>): …`. `<area>` ∈ `ingest, classify, extract, graph, plan, api, web, ext, db, cli, jobs, repo`. Use the commit message given in the GAMEPLAN step.
 4. **Always read the codebase before writing.** Cite real files, functions, patterns. Match existing style. No placeholders, no `TODO: implement`.
-5. **Stop at every STOP marker in the GAMEPLAN.** Present what was done in one paragraph and wait.
+5. **Stop at every STOP marker in the GAMEPLAN.** Present what was done in one paragraph, open the phase PR (see Branching), and wait. The STOP summary and the PR description must include (a) what the operator has to do by hand to validate the phase, in plain terms, and (b) a **reading list** covering every commit in the phase: each file marked **read thoroughly** (logic, anything destructive or byte-level, anything touching the browser or the DB), **skim** (tests, glue, UI markup), or **skip** (lockfiles, fixtures, generated files), with one line on why.
 6. **Open questions block implementation.** If a step is tagged `[Qn]` and Qn is unanswered below, ask; record the answer in this file.
 7. **Tests are part of the step.** Every behaviour-adding step adds tests in the same commit. Prefer small deterministic tests on saved fixtures (`tests/fixtures/`) over mocking.
 8. **Deterministic code does the dangerous things; the LLM never does.** Closing tabs, writing the DB, writing files — plain code behind an explicit operator click. The LLM classifies, extracts, tags, rates. It never gets a handle to the browser or the filesystem.
@@ -45,7 +45,11 @@ Adapted from Gourze, our orchestration standard. Not optional.
 
 ### Branching
 
-Single repository, single developer. Base branch `main`. One branch per GAMEPLAN phase: `feature/<phase>-<slug>`. When the phase's STOP is approved, merge into `main` (no squash — keep the atomic history). No PRs, no issues, no project board.
+Single repository, single developer. Base branch `main`. One branch per GAMEPLAN phase: `feature/<phase>-<slug>`. **Nothing is pushed to `main` directly.**
+
+At the phase STOP, Claude pushes the branch and opens **one PR per phase** against `main` (`gh pr create`), with the STOP summary, the manual-validation steps, and the reading list as the description. **Claude never merges.** The operator reviews the PR on GitHub, leaves comments, and merges it themselves once the manual validation passes — as a **merge commit, no squash**, so the atomic per-step history survives. Review comments on the PR are addressed with follow-up commits on the same branch (`fix(<area>): …`), never by force-push. No issues, no project board.
+
+GitHub setup that enforces this (repo → Settings → Rules → Rulesets → New branch ruleset, target `main`): enable *Restrict deletions*, *Block force pushes*, and *Require a pull request before merging* with **required approvals = 0** — GitHub does not let a PR author approve their own PR, and the operator is the author of record, so a non-zero approval count would lock the solo workflow out; the review happens by reading the PR, not by a formal approval. Leave the bypass list **empty** so the rule applies to the admin too — otherwise direct pushes to `main` still go through. Optionally, once CI exists, add *Require status checks to pass* on `make check`.
 
 ---
 
@@ -117,7 +121,7 @@ After the operator clicks **Close approved**, stages 3→4→5→6→7 run autom
 
 ### Stage 1 — scan
 
-**Extension.** Loaded once (`thorium://extensions` → Developer mode → Load unpacked → `extension/`). `manifest.json`: permissions `tabs`, `storage`; `externally_connectable.matches = ["http://127.0.0.1:8765/*"]`; host permission for the same origin. On install/startup the service worker `POST`s `{extension_id, version}` to `/bridge/hello` so the app knows how to reach it. The web app talks to it with `chrome.runtime.sendMessage(extension_id, {type, payload})`:
+**Extension.** Loaded once (`chromium://extensions` → Developer mode → Load unpacked → `extension/`). `manifest.json`: permissions `tabs`, `storage`; `externally_connectable.matches = ["http://127.0.0.1:8765/*"]`; host permission for the same origin. On install/startup the service worker `POST`s `{extension_id, version}` to `/bridge/hello` so the app knows how to reach it. The web app talks to it with `chrome.runtime.sendMessage(extension_id, {type, payload})`:
 
 | Message | Extension does | Notes |
 |---|---|---|

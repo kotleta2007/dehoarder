@@ -287,4 +287,6 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 
 _Out-of-scope things noticed while implementing. Add here instead of fixing in place._
 
-- (empty)
+- `serve` should run `migrate()` on startup, so a schema bump (e.g. v2, `llm_call.response`) never needs a manual `db init` on an existing database.
+- CLAUDE.md "Decisions" still says "merge to `main`, no PRs"; the Branching section (PR per phase) supersedes it.
+- "Learn & close" names the learned shop from its domain; the cheap model's `shop_name` from classification could prefill it.

@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 import dehoarder.db.session as db_session
 from dehoarder.config import settings
 from dehoarder.db.models import Classification, Decision, Scan, ScanSource, Shop, Tab
+from dehoarder.ingest.archive import ScanNotFoundError, archive
 from dehoarder.ingest.profiles import current_profile, find_profile_by_name
 from dehoarder.ingest.snss import read_open_tabs
 from dehoarder.jobs.runner import JobAlreadyRunningError, UnknownStageError, start_job
@@ -74,6 +75,12 @@ class DecisionIn(BaseModel):
 
 class BulkDecisionOut(BaseModel):
     updated: int
+
+
+class ArchiveOut(BaseModel):
+    archived: int
+    total: int
+    path: str
 
 
 def domain_of(url: str) -> str:
@@ -232,3 +239,13 @@ def set_tabs_decision(
             tab.decision = payload.decision
         session.commit()
         return BulkDecisionOut(updated=len(tabs))
+
+
+@router.post("/scans/{scan_id}/archive", response_model=ArchiveOut)
+def archive_scan(scan_id: int) -> ArchiveOut:
+    """Append the scan's approved tabs to its archive file (idempotent)."""
+    try:
+        result = archive(scan_id)
+    except ScanNotFoundError:
+        raise HTTPException(status_code=404, detail="scan not found") from None
+    return ArchiveOut(archived=result.archived, total=result.total, path=str(result.path))

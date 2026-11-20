@@ -19,12 +19,14 @@ from dehoarder.db.migrate import migrate
 
 @pytest.fixture(autouse=True)
 def shops_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Every test gets its own copy of the registry (learning writes to it)
-    and no OpenRouter key, so nothing can reach the network by accident."""
+    """Every test gets its own copy of the registry (learning writes to it),
+    its own archive directory, and no OpenRouter key, so nothing can reach
+    the network or the real `archive/` by accident."""
     path = tmp_path / "shops.yaml"
     shutil.copy(DATA_DIR / "shops.yaml", path)
     monkeypatch.setattr(settings, "shops_file", path)
     monkeypatch.setattr(settings, "openrouter_api_key", "")
+    monkeypatch.setattr(settings, "archive_dir", tmp_path / "archive")
     return path
 
 

@@ -112,7 +112,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `ingest/archive.py`: `archive(scan_id)` appends to `archive/closed-<scan_id>.jsonl`, sets `archived_at`; append-only, idempotent; `POST /scans/{id}/archive`.
 **Tests**: re-run appends nothing; never truncates.
 **Commit**: `feat(ingest): append-only archive of closed tabs`
-- [ ] Done
+- [x] Done
 
 ### Step 2.6 — Close
 **What**: Tabs view **Close approved**: `POST /scans/{id}/archive` → `sendMessage(close_tabs {ids})` → `POST /scans/{id}/closed {closed, missing}`; server sets `closed_at` / `close_error=missing`; Progress view shows "closed N · failed M · kept K". Refuse if archive step failed.

@@ -228,7 +228,7 @@
     <div class="banner">
       <p><strong>Extension not detected.</strong> Load it once, then reload this page.</p>
       <ol>
-        <li>Open <code>chromium://extensions</code>.</li>
+        <li>Open <code>chrome://extensions</code>.</li>
         <li>Turn on <strong>Developer mode</strong>.</li>
         <li>
           Click <strong>Load unpacked</strong> and select the <code>extension/</code> directory.

@@ -111,7 +111,7 @@ This creates `dehoarder.db` (SQLite) in the current directory.
 
 ### 5. Load the browser extension (once)
 
-1. Open `chromium://extensions` in your browser.
+1. Open `chrome://extensions` in your browser.
 2. Turn on **Developer mode** (top right).
 3. Click **Load unpacked** and select the `extension/` directory of this
    repository.

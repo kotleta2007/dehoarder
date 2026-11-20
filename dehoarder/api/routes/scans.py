@@ -30,6 +30,7 @@ from dehoarder.ingest.close import (
 )
 from dehoarder.ingest.close import summary as close_summary
 from dehoarder.ingest.profiles import current_profile, find_profile_by_name
+from dehoarder.ingest.restore import NotRestorableError, record_restored, restore_list
 from dehoarder.ingest.snss import read_open_tabs
 from dehoarder.jobs.runner import JobAlreadyRunningError, UnknownStageError, start_job
 
@@ -327,3 +328,36 @@ def list_scans() -> list[ScanSummaryOut]:
             )
             for s in scans
         ]
+
+
+class RestoreItemOut(BaseModel):
+    tab_id: int
+    url: str
+
+
+class RestoredIn(BaseModel):
+    tab_ids: list[int]
+
+
+class RestoredOut(BaseModel):
+    restored: int
+
+
+@router.get("/scans/{scan_id}/restore-list", response_model=list[RestoreItemOut])
+def get_restore_list(scan_id: int, only_failed: bool = False) -> list[RestoreItemOut]:
+    try:
+        items = restore_list(scan_id, only_failed=only_failed)
+    except ScanNotFoundError:
+        raise HTTPException(status_code=404, detail="scan not found") from None
+    return [RestoreItemOut(tab_id=i.tab_id, url=i.url) for i in items]
+
+
+@router.post("/scans/{scan_id}/restored", response_model=RestoredOut)
+def scan_restored(scan_id: int, payload: RestoredIn) -> RestoredOut:
+    try:
+        count = record_restored(scan_id, payload.tab_ids)
+    except ScanNotFoundError:
+        raise HTTPException(status_code=404, detail="scan not found") from None
+    except NotRestorableError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from None
+    return RestoredOut(restored=count)

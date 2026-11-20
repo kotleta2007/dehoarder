@@ -197,6 +197,19 @@ export function getScans(): Promise<ScanSummary[]> {
   return send('GET', '/api/v1/scans')
 }
 
+export interface RestoreItem {
+  tab_id: number
+  url: string
+}
+
+export function getRestoreList(scanId: number, onlyFailed: boolean): Promise<RestoreItem[]> {
+  return send('GET', `/api/v1/scans/${scanId}/restore-list?only_failed=${onlyFailed}`)
+}
+
+export function reportRestored(scanId: number, tabIds: number[]): Promise<{ restored: number }> {
+  return send('POST', `/api/v1/scans/${scanId}/restored`, { tab_ids: tabIds })
+}
+
 export function startJob(kind: string): Promise<Job> {
   return send('POST', `/api/v1/jobs/${kind}`)
 }
@@ -251,6 +264,11 @@ export interface CloseResult {
 /** Closes live browser tabs by id. Only ever called from `closeApproved`. */
 export function closeTabsInBrowser(extensionId: string, ids: number[]): Promise<CloseResult> {
   return sendToExtension(extensionId, { type: 'close_tabs', payload: { ids } })
+}
+
+// Opens URLs as background tabs (the extension batches 20 per 500 ms).
+export async function openTabsInBrowser(extensionId: string, urls: string[]): Promise<void> {
+  await sendToExtension<unknown>(extensionId, { type: 'open_tabs', payload: { urls } })
 }
 
 export interface Profile {

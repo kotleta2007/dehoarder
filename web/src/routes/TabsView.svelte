@@ -7,18 +7,24 @@
     getBridgeStatus,
     getJob,
     getProfiles,
+    getRestoreList,
+    getScans,
     getTabs,
     learnShop,
     listTabsFromExtension,
+    openTabsInBrowser,
     reportClosed,
+    reportRestored,
     setTabsDecision,
     startJob,
     type CloseSummary,
     type Profile,
     type ScanOut,
+    type ScanSummary,
     type TabOut,
   } from '../lib/api'
   import { closeApproved } from '../lib/close'
+  import { restoreScan } from '../lib/restore'
   import { closeButtonState, groupTabs } from '../lib/review'
 
   let bridgeConnected = $state<boolean | null>(null)
@@ -168,6 +174,45 @@
       })
     })
     closing = false
+    await loadPastScans()
+  }
+
+  let pastScans = $state<ScanSummary[]>([])
+  let onlyFailed = $state<Record<number, boolean>>({})
+  let restoring = $state<number | null>(null)
+  let restoreNote = $state<string | null>(null)
+
+  async function loadPastScans() {
+    try {
+      pastScans = (await getScans()).filter((s) => s.closed + s.failed > 0)
+    } catch (err) {
+      restoreNote = message(err)
+    }
+  }
+
+  $effect(() => {
+    loadPastScans()
+  })
+
+  async function reopen(scanId: number) {
+    const id = extensionId
+    if (!id) return
+    restoring = scanId
+    restoreNote = null
+    try {
+      const count = await restoreScan(scanId, onlyFailed[scanId] ?? false, {
+        getRestoreList,
+        openTabs: (urls) => openTabsInBrowser(id, urls),
+        reportRestored,
+      })
+      restoreNote = `Reopened ${count} tabs from scan #${scanId}.`
+      if (scan?.id === scanId) tabs = await getTabs(scanId)
+      await loadPastScans()
+    } catch (err) {
+      restoreNote = message(err)
+    } finally {
+      restoring = null
+    }
   }
 
   let review = $derived(groupTabs(tabs))
@@ -307,6 +352,38 @@
         closed {closeSummary.closed} · failed {closeSummary.failed} · kept {closeSummary.kept}
       </p>
     {/if}
+  {/if}
+
+  {#if pastScans.length > 0}
+    <h2>Closed tabs from past scans</h2>
+    {#if restoreNote}
+      <p class="hint">{restoreNote}</p>
+    {/if}
+    <ul class="groups">
+      {#each pastScans as past (past.id)}
+        <li>
+          <span>
+            #{past.id} · {new Date(past.started_at).toLocaleString()} · closed {past.closed} · failed
+            {past.failed}
+          </span>
+          <label>
+            <input
+              type="checkbox"
+              checked={onlyFailed[past.id] ?? false}
+              onchange={(e) => (onlyFailed[past.id] = e.currentTarget.checked)}
+            />
+            only failed
+          </label>
+          <button
+            type="button"
+            disabled={bridgeConnected !== true || restoring !== null}
+            onclick={() => reopen(past.id)}
+          >
+            {restoring === past.id ? 'Reopening…' : 'Reopen closed tabs'}
+          </button>
+        </li>
+      {/each}
+    </ul>
   {/if}
 </section>
 

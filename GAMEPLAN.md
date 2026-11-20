@@ -124,7 +124,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: Tabs view → past scans list → **Reopen closed tabs** (+ "only failed"): `GET /scans/{id}/restore-list` → `sendMessage(open_tabs {urls})` → `POST /scans/{id}/restored`; clears `closed_at`, appends `restored` lines.
 **Tests**: API; vitest with fake extension.
 **Commit**: `feat(ingest): restore flow`
-- [ ] Done
+- [x] Done
 
 **STOP** — on the operator's machine: scan → review → close a **small subset** (keep-toggle everything except one small shop) → restore → verify → full close. Merge.
 

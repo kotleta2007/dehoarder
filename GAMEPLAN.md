@@ -88,7 +88,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `data/shops.yaml` seed; `classify/registry.py`: load, match hostname + parent domains, sync to `shop` table, `add_learned(domain, name)` writes YAML back preserving order; `GET /shops`, `POST /shops/learn`.
 **Tests**: `www.amazon.de` → amazon; unknown → None; learned round-trip.
 **Commit**: `feat(classify): shop registry`
-- [ ] Done
+- [x] Done
 
 ### Step 2.2 — Deterministic rules
 **What**: `classify/rules.py`: URL patterns (`/dp/`, `/book/`, `/product/`, ISBN with checksum), title patterns (` — `, ` | `, "купить", "книга", "by "), non-book domain allowlist → `known_shop | unknown_book_candidate | not_book`.

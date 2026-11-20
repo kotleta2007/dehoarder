@@ -11,7 +11,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from dehoarder.api.routes import bridge, jobs, profiles, scans, status
+from dehoarder.api.routes import bridge, jobs, profiles, scans, shops, status
 
 WEB_DIST = Path(__file__).resolve().parent.parent.parent / "web" / "dist"
 
@@ -21,6 +21,7 @@ app.include_router(jobs.router)
 app.include_router(bridge.router)
 app.include_router(scans.router)
 app.include_router(profiles.router)
+app.include_router(shops.router)
 
 if WEB_DIST.is_dir():
     app.mount("/", StaticFiles(directory=WEB_DIST, html=True), name="web")

@@ -80,10 +80,25 @@ describe('closeTabs', () => {
     expect(result).toEqual({ closed: ids, missing: [] })
   })
 
-  it('reports a batch as missing when remove rejects', async () => {
+  it('reports every id as missing when no tab can be removed', async () => {
     const chromeApi = fakeChrome({ removeError: new Error('no such tab') })
     const result = await closeTabs(chromeApi, [1, 2, 3])
     expect(result).toEqual({ closed: [], missing: [1, 2, 3] })
+  })
+
+  it('retries a failed batch tab by tab so one stale id does not block the rest', async () => {
+    const chromeApi = fakeChrome()
+    chromeApi.tabs.remove.mockImplementation(async (arg) => {
+      const ids = Array.isArray(arg) ? arg : [arg]
+      if (ids.includes(2)) throw new Error('No tab with id: 2')
+    })
+
+    const result = await closeTabs(chromeApi, [1, 2, 3])
+
+    expect(result).toEqual({ closed: [1, 3], missing: [2] })
+    expect(chromeApi.tabs.remove).toHaveBeenCalledWith([1, 2, 3])
+    expect(chromeApi.tabs.remove).toHaveBeenCalledWith(1)
+    expect(chromeApi.tabs.remove).toHaveBeenCalledWith(3)
   })
 })
 

@@ -39,6 +39,9 @@ export async function listTabs(chromeApi) {
   return normalizeTabs(tabs)
 }
 
+// tabs.remove(array) rejects the whole call when any one id is gone, so a
+// failed batch is retried tab by tab: one stale id must not leave 49 live
+// tabs open while reporting them as missing.
 export async function closeTabs(chromeApi, ids) {
   const closed = []
   const missing = []
@@ -47,7 +50,14 @@ export async function closeTabs(chromeApi, ids) {
       await chromeApi.tabs.remove(batch)
       closed.push(...batch)
     } catch {
-      missing.push(...batch)
+      for (const id of batch) {
+        try {
+          await chromeApi.tabs.remove(id)
+          closed.push(id)
+        } catch {
+          missing.push(id)
+        }
+      }
     }
   }
   return { closed, missing }

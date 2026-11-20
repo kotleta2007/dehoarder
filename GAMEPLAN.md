@@ -118,7 +118,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: Tabs view **Close approved**: `POST /scans/{id}/archive` → `sendMessage(close_tabs {ids})` → `POST /scans/{id}/closed {closed, missing}`; server sets `closed_at` / `close_error=missing`; Progress view shows "closed N · failed M · kept K". Refuse if archive step failed.
 **Tests**: API; vitest for the sequence with a fake extension.
 **Commit**: `feat(ingest): close flow from the web app`
-- [ ] Done
+- [x] Done
 
 ### Step 2.7 — Restore
 **What**: Tabs view → past scans list → **Reopen closed tabs** (+ "only failed"): `GET /scans/{id}/restore-list` → `sendMessage(open_tabs {urls})` → `POST /scans/{id}/restored`; clears `closed_at`, appends `restored` lines.

@@ -153,6 +153,50 @@ export function learnShop(domain: string, name = ''): Promise<Shop> {
   return send('POST', '/api/v1/shops/learn', { domain, name })
 }
 
+export interface CloseItem {
+  tab_id: number
+  browser_tab_id: number
+  url: string
+}
+
+export interface ArchiveOut {
+  archived: number
+  total: number
+  path: string
+  /** The only tabs the web app may ask the extension to close. */
+  to_close: CloseItem[]
+}
+
+export interface CloseSummary {
+  closed: number
+  failed: number
+  kept: number
+}
+
+export interface ScanSummary extends CloseSummary {
+  id: number
+  started_at: string
+  source: string
+  profile_name: string | null
+  tab_count: number
+}
+
+export function archiveScan(scanId: number): Promise<ArchiveOut> {
+  return send('POST', `/api/v1/scans/${scanId}/archive`)
+}
+
+/** Reports the close outcome by tab id (not browser tab id). */
+export function reportClosed(
+  scanId: number,
+  outcome: { closed: number[]; missing: number[] },
+): Promise<CloseSummary> {
+  return send('POST', `/api/v1/scans/${scanId}/closed`, outcome)
+}
+
+export function getScans(): Promise<ScanSummary[]> {
+  return send('GET', '/api/v1/scans')
+}
+
 export function startJob(kind: string): Promise<Job> {
   return send('POST', `/api/v1/jobs/${kind}`)
 }
@@ -173,15 +217,18 @@ export async function createScan(tabs: ChromeTab[]): Promise<ScanOut> {
   return (await response.json()) as ScanOut
 }
 
-/** Asks the extension (via `externally_connectable`) to list every tab in
- * this browser profile. Rejects if no extension is detected. */
-export function listTabsFromExtension(extensionId: string): Promise<ChromeTab[]> {
+/** Sends one message to the extension (via `externally_connectable`).
+ * Rejects if no extension is detected or it reports an error. */
+function sendToExtension<T>(
+  extensionId: string,
+  message: { type: string; payload?: unknown },
+): Promise<T> {
   return new Promise((resolve, reject) => {
     if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
       reject(new Error('chrome.runtime is not available'))
       return
     }
-    chrome.runtime.sendMessage(extensionId, { type: 'list_tabs' }, (response: ChromeTab[]) => {
+    chrome.runtime.sendMessage(extensionId, message, (response: T) => {
       if (chrome.runtime.lastError) {
         reject(new Error(chrome.runtime.lastError.message))
         return
@@ -189,6 +236,21 @@ export function listTabsFromExtension(extensionId: string): Promise<ChromeTab[]>
       resolve(response)
     })
   })
+}
+
+/** Lists every tab in this browser profile. */
+export function listTabsFromExtension(extensionId: string): Promise<ChromeTab[]> {
+  return sendToExtension(extensionId, { type: 'list_tabs' })
+}
+
+export interface CloseResult {
+  closed: number[]
+  missing: number[]
+}
+
+/** Closes live browser tabs by id. Only ever called from `closeApproved`. */
+export function closeTabsInBrowser(extensionId: string, ids: number[]): Promise<CloseResult> {
+  return sendToExtension(extensionId, { type: 'close_tabs', payload: { ids } })
 }
 
 export interface Profile {

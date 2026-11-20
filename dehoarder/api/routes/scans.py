@@ -22,6 +22,13 @@ import dehoarder.db.session as db_session
 from dehoarder.config import settings
 from dehoarder.db.models import Classification, Decision, Scan, ScanSource, Shop, Tab
 from dehoarder.ingest.archive import ScanNotFoundError, archive
+from dehoarder.ingest.close import (
+    NotClosableError,
+    check_closable_scan,
+    close_list,
+    record_closed,
+)
+from dehoarder.ingest.close import summary as close_summary
 from dehoarder.ingest.profiles import current_profile, find_profile_by_name
 from dehoarder.ingest.snss import read_open_tabs
 from dehoarder.jobs.runner import JobAlreadyRunningError, UnknownStageError, start_job
@@ -77,10 +84,41 @@ class BulkDecisionOut(BaseModel):
     updated: int
 
 
+class CloseItemOut(BaseModel):
+    tab_id: int
+    browser_tab_id: int
+    url: str
+
+
 class ArchiveOut(BaseModel):
     archived: int
     total: int
     path: str
+    to_close: list[CloseItemOut]
+
+
+class ClosedIn(BaseModel):
+    """Outcome of `close_tabs`, mapped back to tab ids by the web app."""
+
+    closed: list[int]
+    missing: list[int]
+
+
+class CloseSummaryOut(BaseModel):
+    closed: int
+    failed: int
+    kept: int
+
+
+class ScanSummaryOut(BaseModel):
+    id: int
+    started_at: datetime
+    source: str
+    profile_name: str | None
+    tab_count: int
+    closed: int
+    failed: int
+    kept: int
 
 
 def domain_of(url: str) -> str:
@@ -243,9 +281,49 @@ def set_tabs_decision(
 
 @router.post("/scans/{scan_id}/archive", response_model=ArchiveOut)
 def archive_scan(scan_id: int) -> ArchiveOut:
-    """Append the scan's approved tabs to its archive file (idempotent)."""
+    """Append the scan's approved tabs to its archive file (idempotent) and
+    return the archived, still-open tabs: the only ones the web app may ask
+    the extension to close."""
     try:
+        with db_session.SessionLocal() as session:
+            check_closable_scan(session, scan_id)
         result = archive(scan_id)
+        items = close_list(scan_id)
     except ScanNotFoundError:
         raise HTTPException(status_code=404, detail="scan not found") from None
-    return ArchiveOut(archived=result.archived, total=result.total, path=str(result.path))
+    except NotClosableError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from None
+    return ArchiveOut(
+        archived=result.archived,
+        total=result.total,
+        path=str(result.path),
+        to_close=[CloseItemOut(**vars(item)) for item in items],
+    )
+
+
+@router.post("/scans/{scan_id}/closed", response_model=CloseSummaryOut)
+def scan_closed(scan_id: int, payload: ClosedIn) -> CloseSummaryOut:
+    try:
+        result = record_closed(scan_id, payload.closed, payload.missing)
+    except ScanNotFoundError:
+        raise HTTPException(status_code=404, detail="scan not found") from None
+    except NotClosableError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from None
+    return CloseSummaryOut(**vars(result))
+
+
+@router.get("/scans", response_model=list[ScanSummaryOut])
+def list_scans() -> list[ScanSummaryOut]:
+    with db_session.SessionLocal() as session:
+        scans = list(session.scalars(select(Scan).order_by(Scan.id.desc())))
+        return [
+            ScanSummaryOut(
+                id=s.id,
+                started_at=s.started_at,
+                source=s.source.value,
+                profile_name=s.profile_name,
+                tab_count=s.tab_count,
+                **vars(close_summary(session, s.id)),
+            )
+            for s in scans
+        ]

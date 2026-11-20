@@ -1,5 +1,7 @@
 <script lang="ts">
   import {
+    archiveScan,
+    closeTabsInBrowser,
     createScan,
     createScanFromSnss,
     getBridgeStatus,
@@ -8,12 +10,15 @@
     getTabs,
     learnShop,
     listTabsFromExtension,
+    reportClosed,
     setTabsDecision,
     startJob,
+    type CloseSummary,
     type Profile,
     type ScanOut,
     type TabOut,
   } from '../lib/api'
+  import { closeApproved } from '../lib/close'
   import { closeButtonState, groupTabs } from '../lib/review'
 
   let bridgeConnected = $state<boolean | null>(null)
@@ -145,8 +150,30 @@
 
   const keepDomain = (domain: string) => act(() => setTabsDecision(scan!.id, { domain }, 'keep'))
 
+  let closing = $state(false)
+  let closeSummary = $state<CloseSummary | null>(null)
+
+  async function closeNow() {
+    const id = extensionId
+    if (!scan || !id) return
+    const scanId = scan.id
+    closing = true
+    closeSummary = null
+    await act(async () => {
+      closeSummary = await closeApproved(scanId, {
+        archiveScan,
+        listTabs: () => listTabsFromExtension(id),
+        closeTabs: (ids) => closeTabsInBrowser(id, ids),
+        reportClosed,
+      })
+    })
+    closing = false
+  }
+
   let review = $derived(groupTabs(tabs))
   let closeState = $derived(closeButtonState(tabs))
+  // Session-file scans carry session ids, not live tab ids: never closable.
+  let canClose = $derived(bridgeConnected === true && scan?.source === 'extension')
 </script>
 
 <section>
@@ -261,13 +288,25 @@
     </details>
 
     <p>
-      <button type="button" class="primary" disabled={closeState.disabled}>
-        Close approved ({closeState.count} tabs)
+      <button
+        type="button"
+        class="primary"
+        disabled={closeState.disabled || !canClose || busy}
+        onclick={closeNow}
+      >
+        {closing ? 'Closing…' : `Close approved (${closeState.count} tabs)`}
       </button>
-      {#if closeState.pending > 0}
+      {#if !canClose}
+        <span class="hint">Closing needs the extension and a scan made with it.</span>
+      {:else if closeState.pending > 0}
         <span class="hint">{closeState.pending} tabs still need a decision.</span>
       {/if}
     </p>
+    {#if closeSummary}
+      <p class="banner ok">
+        closed {closeSummary.closed} · failed {closeSummary.failed} · kept {closeSummary.kept}
+      </p>
+    {/if}
   {/if}
 </section>
 

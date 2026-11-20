@@ -94,7 +94,7 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `classify/rules.py`: URL patterns (`/dp/`, `/book/`, `/product/`, ISBN with checksum), title patterns (` — `, ` | `, "купить", "книга", "by "), non-book domain allowlist → `known_shop | unknown_book_candidate | not_book`.
 **Tests**: table-driven, 30+ cases incl. RU/FR/DE.
 **Commit**: `feat(classify): url/title heuristics`
-- [ ] Done
+- [x] Done
 
 ### Step 2.3 — OpenRouter client + unknown-domain classifier
 **What**: `llm/client.py`: OpenAI-compatible chat + embeddings against OpenRouter; `complete(prompt_name, variables, tier, schema, effort=None)`; prompts from `llm/prompts/*.md`; cache by prompt hash in `llm_call` with tokens/cost; `embed(texts)` batched 50. `classify/llm.py`: one cheap call per unknown domain over ≤10 samples → `{is_bookshop, shop_name, kind, confidence}`. Prompt `classify_domain.md`.

@@ -148,3 +148,7 @@ Other CLI commands, mainly for development:
 Architecture, data model and pipeline details are in
 [`CLAUDE.md`](CLAUDE.md). The step-by-step build plan is in
 [`GAMEPLAN.md`](GAMEPLAN.md).
+
+## License
+
+[GNU Affero General Public License v3.0](LICENSE).

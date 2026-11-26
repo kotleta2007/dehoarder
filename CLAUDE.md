@@ -121,7 +121,7 @@ After the operator clicks **Close approved**, stages 3→4→5→6→7 run autom
 
 ### Stage 1 — scan
 
-**Extension.** Loaded once (`chromium://extensions` → Developer mode → Load unpacked → `extension/`). `manifest.json`: permissions `tabs`, `storage`; `externally_connectable.matches = ["http://127.0.0.1:8765/*"]`; host permission for the same origin. On install/startup the service worker `POST`s `{extension_id, version}` to `/bridge/hello` so the app knows how to reach it. The web app talks to it with `chrome.runtime.sendMessage(extension_id, {type, payload})`:
+**Extension.** Loaded once (`chrome://extensions` → Developer mode → Load unpacked → `extension/`). `manifest.json`: permissions `tabs`, `storage`; `externally_connectable.matches = ["http://127.0.0.1:8765/*"]`; host permission for the same origin. On install/startup the service worker `POST`s `{extension_id, version}` to `/bridge/hello` so the app knows how to reach it. The web app talks to it with `chrome.runtime.sendMessage(extension_id, {type, payload})`:
 
 | Message | Extension does | Notes |
 |---|---|---|
@@ -240,8 +240,8 @@ source           id, book_id, tab_id?, shop_id, url, price?, currency?, availabi
 edge             id, src_book_id, dst_book_id, type, weight, meta (json), cross_lane
 reading_plan     id, created_at, target, tol, horizon, seeds (json), warnings (json)
 plan_item        id, plan_id, lane, position, book_id, reason
-job              id, kind (chain|scan|close|process|tag|link|plan), status, stage, progress (json), error?, started_at, finished_at
-llm_call         id, stage, model, prompt_hash, input_tokens, output_tokens, cost_usd, created_at
+job              id, kind (chain|scan|classify|close|process|tag|link|plan), status, stage, progress (json), error?, started_at, finished_at
+llm_call         id, stage, model, prompt_hash, input_tokens, output_tokens, cost_usd, response?, created_at
 bridge           extension_id, version, last_seen
 ```
 
@@ -305,7 +305,7 @@ Shopping carts (future; web agent with the operator watching), purchasing, non-b
 
 ## Decisions (all questions resolved)
 
-Extension lists/closes/reopens, driven from the web app; SNSS read-only fallback for inventory · current profile = whatever the extension runs in; SNSS fallback uses last-used, names from `Local State` · SQLite · OpenRouter models as in the stack table · carts deferred · non-book tabs always left open · one node per book + `selection_count` · branch per phase, merge to `main`, no PRs · native currency when shown · English UI, language is a property feeding difficulty (`fr +2`, `de +4`, other `+4`) · tolerance default ±1.0, slider in UI · `restore` kept · no terminal confirmations.
+Extension lists/closes/reopens, driven from the web app; SNSS read-only fallback for inventory · current profile = whatever the extension runs in; SNSS fallback uses last-used, names from `Local State` · SQLite · OpenRouter models as in the stack table · carts deferred · non-book tabs always left open · one node per book + `selection_count` · branch per phase, merge to `main`, no PRs · native currency when shown · English UI, language is a property feeding difficulty (`fr +2`, `de +4`, other `+4`) · tolerance default ±1.0, slider in UI · `restore` kept · no terminal confirmations · LLM completions cached in `llm_call.response` keyed by `prompt_hash` (schema v2; embedding calls log spend only, no response).
 
 ## Deferred
 

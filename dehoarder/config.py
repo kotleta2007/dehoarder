@@ -72,6 +72,9 @@ class Settings(BaseSettings):
     llm_cheap_model: str = Field(default="deepseek/deepseek-v4-flash", alias="LLM_CHEAP_MODEL")
     embedding_model: str = Field(default="qwen/qwen3-embedding-8b", alias="EMBEDDING_MODEL")
 
+    # Classify: minimum LLM confidence to call an unknown domain a bookshop
+    classify_min_confidence: float = 0.5
+
     # Fetch scheduler
     default_min_interval_s: float = 2.0
     global_concurrency: int = 4

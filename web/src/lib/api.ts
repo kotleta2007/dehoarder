@@ -67,13 +67,20 @@ export function buildScanPayload(tabs: ChromeTab[]): ScanPayload {
   }
 }
 
+export type Classification = 'known_shop' | 'unknown_book' | 'not_book'
+export type Decision = 'close' | 'keep' | 'pending'
+
 export interface TabOut {
   id: number
   url: string
   title: string | null
   domain: string
   discarded: boolean
-  decision: string
+  decision: Decision
+  classification: Classification | null
+  shop: string | null
+  shop_name: string | null
+  closed_at: string | null
 }
 
 export interface ScanOut {
@@ -83,6 +90,132 @@ export interface ScanOut {
   profile_name: string | null
   tab_count: number
   tabs: TabOut[]
+  classify_job_id: number | null
+}
+
+export interface Job {
+  id: number
+  kind: string
+  status: 'running' | 'done' | 'failed'
+  stage: string | null
+  progress: Record<string, unknown>
+  error: string | null
+}
+
+async function send<T>(method: string, url: string, body?: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  if (!response.ok) {
+    let detail = ''
+    try {
+      detail = ((await response.json()) as { detail?: string }).detail ?? ''
+    } catch {
+      // body was not JSON; the status code is enough
+    }
+    throw new Error(`${method} ${url} failed: ${response.status}${detail ? ` — ${detail}` : ''}`)
+  }
+  return (await response.json()) as T
+}
+
+export function getTabs(scanId: number): Promise<TabOut[]> {
+  return send('GET', `/api/v1/tabs?scan=${scanId}`)
+}
+
+export function setTabDecision(tabId: number, decision: Decision): Promise<TabOut> {
+  return send('PATCH', `/api/v1/tabs/${tabId}`, { decision })
+}
+
+/** Set the decision for every open tab of a scan in one shop or on one domain. */
+export function setTabsDecision(
+  scanId: number,
+  filter: { shop: string } | { domain: string },
+  decision: Decision,
+): Promise<{ updated: number }> {
+  const params = new URLSearchParams({ scan: String(scanId), ...filter })
+  return send('PATCH', `/api/v1/tabs?${params.toString()}`, { decision })
+}
+
+export interface Shop {
+  id: number
+  slug: string
+  name: string
+  domains: string[]
+  kind: string
+  currency: string | null
+  extractor: string | null
+  learned: boolean
+}
+
+export function learnShop(domain: string, name = ''): Promise<Shop> {
+  return send('POST', '/api/v1/shops/learn', { domain, name })
+}
+
+export interface CloseItem {
+  tab_id: number
+  browser_tab_id: number
+  url: string
+}
+
+export interface ArchiveOut {
+  archived: number
+  total: number
+  path: string
+  /** The only tabs the web app may ask the extension to close. */
+  to_close: CloseItem[]
+}
+
+export interface CloseSummary {
+  closed: number
+  failed: number
+  kept: number
+}
+
+export interface ScanSummary extends CloseSummary {
+  id: number
+  started_at: string
+  source: string
+  profile_name: string | null
+  tab_count: number
+}
+
+export function archiveScan(scanId: number): Promise<ArchiveOut> {
+  return send('POST', `/api/v1/scans/${scanId}/archive`)
+}
+
+/** Reports the close outcome by tab id (not browser tab id). */
+export function reportClosed(
+  scanId: number,
+  outcome: { closed: number[]; missing: number[] },
+): Promise<CloseSummary> {
+  return send('POST', `/api/v1/scans/${scanId}/closed`, outcome)
+}
+
+export function getScans(): Promise<ScanSummary[]> {
+  return send('GET', '/api/v1/scans')
+}
+
+export interface RestoreItem {
+  tab_id: number
+  url: string
+}
+
+export function getRestoreList(scanId: number, onlyFailed: boolean): Promise<RestoreItem[]> {
+  return send('GET', `/api/v1/scans/${scanId}/restore-list?only_failed=${onlyFailed}`)
+}
+
+export function reportRestored(scanId: number, tabIds: number[]): Promise<{ restored: number }> {
+  return send('POST', `/api/v1/scans/${scanId}/restored`, { tab_ids: tabIds })
+}
+
+export function startJob(kind: string): Promise<Job> {
+  return send('POST', `/api/v1/jobs/${kind}`)
+}
+
+export function getJob(jobId: number): Promise<Job> {
+  return send('GET', `/api/v1/jobs/${jobId}`)
 }
 
 export async function createScan(tabs: ChromeTab[]): Promise<ScanOut> {
@@ -97,15 +230,18 @@ export async function createScan(tabs: ChromeTab[]): Promise<ScanOut> {
   return (await response.json()) as ScanOut
 }
 
-/** Asks the extension (via `externally_connectable`) to list every tab in
- * this browser profile. Rejects if no extension is detected. */
-export function listTabsFromExtension(extensionId: string): Promise<ChromeTab[]> {
+/** Sends one message to the extension (via `externally_connectable`).
+ * Rejects if no extension is detected or it reports an error. */
+function sendToExtension<T>(
+  extensionId: string,
+  message: { type: string; payload?: unknown },
+): Promise<T> {
   return new Promise((resolve, reject) => {
     if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
       reject(new Error('chrome.runtime is not available'))
       return
     }
-    chrome.runtime.sendMessage(extensionId, { type: 'list_tabs' }, (response: ChromeTab[]) => {
+    chrome.runtime.sendMessage(extensionId, message, (response: T) => {
       if (chrome.runtime.lastError) {
         reject(new Error(chrome.runtime.lastError.message))
         return
@@ -113,6 +249,26 @@ export function listTabsFromExtension(extensionId: string): Promise<ChromeTab[]>
       resolve(response)
     })
   })
+}
+
+/** Lists every tab in this browser profile. */
+export function listTabsFromExtension(extensionId: string): Promise<ChromeTab[]> {
+  return sendToExtension(extensionId, { type: 'list_tabs' })
+}
+
+export interface CloseResult {
+  closed: number[]
+  missing: number[]
+}
+
+/** Closes live browser tabs by id. Only ever called from `closeApproved`. */
+export function closeTabsInBrowser(extensionId: string, ids: number[]): Promise<CloseResult> {
+  return sendToExtension(extensionId, { type: 'close_tabs', payload: { ids } })
+}
+
+// Opens URLs as background tabs (the extension batches 20 per 500 ms).
+export async function openTabsInBrowser(extensionId: string, urls: string[]): Promise<void> {
+  await sendToExtension<unknown>(extensionId, { type: 'open_tabs', payload: { urls } })
 }
 
 export interface Profile {

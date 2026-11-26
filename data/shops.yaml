@@ -1,0 +1,15 @@
+# Known bookshops and publishers. Tabs on these domains (or their
+# subdomains) are classified as `known_shop`. Entries the operator adds with
+# "Learn & close" in the Tabs view are appended below with `learned: true`.
+# Fields: slug, domains, kind (bookshop|publisher|marketplace), and optional
+# name, currency, min_interval_s, extractor.
+- {slug: amazon,       domains: [amazon.com, amazon.de, amazon.co.uk, amazon.fr], kind: marketplace, extractor: amazon}
+- {slug: abebooks,     domains: [abebooks.com, abebooks.de, abebooks.co.uk],       kind: marketplace, extractor: abebooks}
+- {slug: bookvoed,     domains: [bookvoed.ru],                                      kind: bookshop,    currency: RUB, extractor: bookvoed}
+- {slug: chitai-gorod, domains: [chitai-gorod.ru],                                  kind: bookshop,    currency: RUB, extractor: chitai_gorod}
+- {slug: manning,      domains: [manning.com],                                      kind: publisher,   currency: USD, extractor: manning}
+- {slug: mccme,        domains: [biblio.mccme.ru, mccme.ru],                        kind: publisher,   currency: RUB}
+- {slug: azbooka,      domains: [azbooka.ru],                                       kind: publisher,   currency: RUB}
+- {slug: nordlux,      domains: [nordlux.org],                                      kind: bookshop}
+- {slug: totenburg,    domains: [totenburg.org],                                    kind: bookshop}
+- {slug: taschen,      domains: [taschen.com],                                      kind: publisher,   currency: EUR}

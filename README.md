@@ -111,7 +111,7 @@ This creates `dehoarder.db` (SQLite) in the current directory.
 
 ### 5. Load the browser extension (once)
 
-1. Open `chromium://extensions` in your browser.
+1. Open `chrome://extensions` in your browser.
 2. Turn on **Developer mode** (top right).
 3. Click **Load unpacked** and select the `extension/` directory of this
    repository.
@@ -148,3 +148,7 @@ Other CLI commands, mainly for development:
 Architecture, data model and pipeline details are in
 [`CLAUDE.md`](CLAUDE.md). The step-by-step build plan is in
 [`GAMEPLAN.md`](GAMEPLAN.md).
+
+## License
+
+[GNU Affero General Public License v3.0](LICENSE).

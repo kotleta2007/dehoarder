@@ -88,43 +88,43 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 **What**: `data/shops.yaml` seed; `classify/registry.py`: load, match hostname + parent domains, sync to `shop` table, `add_learned(domain, name)` writes YAML back preserving order; `GET /shops`, `POST /shops/learn`.
 **Tests**: `www.amazon.de` → amazon; unknown → None; learned round-trip.
 **Commit**: `feat(classify): shop registry`
-- [ ] Done
+- [x] Done
 
 ### Step 2.2 — Deterministic rules
 **What**: `classify/rules.py`: URL patterns (`/dp/`, `/book/`, `/product/`, ISBN with checksum), title patterns (` — `, ` | `, "купить", "книга", "by "), non-book domain allowlist → `known_shop | unknown_book_candidate | not_book`.
 **Tests**: table-driven, 30+ cases incl. RU/FR/DE.
 **Commit**: `feat(classify): url/title heuristics`
-- [ ] Done
+- [x] Done
 
 ### Step 2.3 — OpenRouter client + unknown-domain classifier
 **What**: `llm/client.py`: OpenAI-compatible chat + embeddings against OpenRouter; `complete(prompt_name, variables, tier, schema, effort=None)`; prompts from `llm/prompts/*.md`; cache by prompt hash in `llm_call` with tokens/cost; `embed(texts)` batched 50. `classify/llm.py`: one cheap call per unknown domain over ≤10 samples → `{is_bookshop, shop_name, kind, confidence}`. Prompt `classify_domain.md`.
 **Tests**: fake transport; cache hit skips call; classifier mapping.
 **Commit**: `feat(classify): openrouter client and unknown-domain classifier`
-- [ ] Done
+- [x] Done
 
 ### Step 2.4 — Classify stage + review UI
 **What**: `classify/classify.py::classify_scan()` (registry → rules → LLM) as a job (`POST /jobs/classify`, auto-triggered after a scan); sets `classification` and default `decision` (known → close, unknown → pending, not_book → keep). `PATCH /tabs/{id}`, `PATCH /tabs?scan=&shop=`. Tabs view: three groups, per-shop keep toggle, per-unknown-domain **Learn & close** / **Keep**, collapsed non-book group, **Close approved (N)** button (disabled until no `pending` remain).
 **Tests**: API over fixture scan; vitest for grouping and button state.
 **Commit**: `feat(classify): classify job and review ui`
-- [ ] Done
+- [x] Done
 
 ### Step 2.5 — Archive
 **What**: `ingest/archive.py`: `archive(scan_id)` appends to `archive/closed-<scan_id>.jsonl`, sets `archived_at`; append-only, idempotent; `POST /scans/{id}/archive`.
 **Tests**: re-run appends nothing; never truncates.
 **Commit**: `feat(ingest): append-only archive of closed tabs`
-- [ ] Done
+- [x] Done
 
 ### Step 2.6 — Close
 **What**: Tabs view **Close approved**: `POST /scans/{id}/archive` → `sendMessage(close_tabs {ids})` → `POST /scans/{id}/closed {closed, missing}`; server sets `closed_at` / `close_error=missing`; Progress view shows "closed N · failed M · kept K". Refuse if archive step failed.
 **Tests**: API; vitest for the sequence with a fake extension.
 **Commit**: `feat(ingest): close flow from the web app`
-- [ ] Done
+- [x] Done
 
 ### Step 2.7 — Restore
 **What**: Tabs view → past scans list → **Reopen closed tabs** (+ "only failed"): `GET /scans/{id}/restore-list` → `sendMessage(open_tabs {urls})` → `POST /scans/{id}/restored`; clears `closed_at`, appends `restored` lines.
 **Tests**: API; vitest with fake extension.
 **Commit**: `feat(ingest): restore flow`
-- [ ] Done
+- [x] Done
 
 **STOP** — on the operator's machine: scan → review → close a **small subset** (keep-toggle everything except one small shop) → restore → verify → full close. Merge.
 
@@ -287,4 +287,6 @@ _Ordered steps. Each step is one committable unit. Tick a step **in the same com
 
 _Out-of-scope things noticed while implementing. Add here instead of fixing in place._
 
-- (empty)
+- `serve` should run `migrate()` on startup, so a schema bump (e.g. v2, `llm_call.response`) never needs a manual `db init` on an existing database.
+- CLAUDE.md "Decisions" still says "merge to `main`, no PRs"; the Branching section (PR per phase) supersedes it.
+- "Learn & close" names the learned shop from its domain; the cheap model's `shop_name` from classification could prefill it.

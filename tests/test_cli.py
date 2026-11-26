@@ -17,6 +17,7 @@ def _run(
 ) -> subprocess.CompletedProcess[str]:
     env = dict(os.environ)
     env["DB_PATH"] = str(db_path)
+    env["OPENROUTER_API_KEY"] = ""  # never reach the network from a test
     if thorium_dir is not None:
         env["THORIUM_DIR"] = str(thorium_dir)
     return subprocess.run(
@@ -59,8 +60,17 @@ def test_run_stage_stub_exits_2(tmp_path: Path) -> None:
     db_path = tmp_path / "dehoarder.db"
     _run("db", "init", db_path=db_path)
 
-    result = _run("run", "classify", db_path=db_path)
+    result = _run("run", "process", db_path=db_path)
     assert result.returncode == 2
+
+
+def test_run_classify_without_scan_exits_1(tmp_path: Path) -> None:
+    db_path = tmp_path / "dehoarder.db"
+    _run("db", "init", db_path=db_path)
+
+    result = _run("run", "classify", db_path=db_path)
+    assert result.returncode == 1
+    assert "scan first" in result.stderr
 
 
 def test_run_unknown_stage_is_usage_error(tmp_path: Path) -> None:
@@ -86,6 +96,17 @@ def test_run_scan_snss(tmp_path: Path) -> None:
     assert result.returncode == 0
     assert "profile: Test Profile" in result.stdout
     assert "open tabs: 2" in result.stdout
+
+
+def test_run_classify_after_scan(tmp_path: Path) -> None:
+    db_path = tmp_path / "dehoarder.db"
+    _run("db", "init", db_path=db_path)
+    _run("run", "scan-snss", db_path=db_path, thorium_dir=FIXTURE_THORIUM_DIR)
+
+    result = _run("run", "classify", db_path=db_path)
+    assert result.returncode == 0, result.stderr
+    counts = dict(line.split(": ") for line in result.stdout.splitlines() if line.count(": ") == 1)
+    assert sum(int(counts[k]) for k in ("known_shop", "unknown_book", "not_book")) == 2
 
 
 def test_run_scan_snss_with_no_profile_exits_1(tmp_path: Path) -> None:

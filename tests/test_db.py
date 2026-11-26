@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from sqlalchemy import inspect, select
+from sqlalchemy import inspect, select, text
 
 from dehoarder.db.migrate import CURRENT_VERSION, migrate
 from dehoarder.db.models import (
@@ -91,3 +91,35 @@ def test_round_trip_book_shop_scan_tab(tmp_path: Path) -> None:
         assert loaded_book.authors == ["Jane Doe"]
         assert loaded_book.selection_count == 1
         assert loaded_book.status.value == "unread"
+
+
+def test_migrate_upgrades_v1_llm_call_in_place(tmp_path: Path) -> None:
+    """A database created before `llm_call.response` existed gains the column."""
+    engine = make_engine(str(tmp_path / "v1.db"))
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "CREATE TABLE llm_call (id INTEGER PRIMARY KEY, stage VARCHAR NOT NULL, "
+                "model VARCHAR NOT NULL, prompt_hash VARCHAR NOT NULL, "
+                "input_tokens INTEGER NOT NULL, output_tokens INTEGER NOT NULL, "
+                "cost_usd FLOAT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO llm_call (stage, model, prompt_hash, input_tokens, output_tokens, "
+                "cost_usd) VALUES ('classify', 'm', 'h', 1, 2, 0.5)"
+            )
+        )
+
+    migrate(engine)
+    migrate(engine)  # idempotent
+
+    columns = {c["name"] for c in inspect(engine).get_columns("llm_call")}
+    assert "response" in columns
+    indexes = {i["name"] for i in inspect(engine).get_indexes("llm_call")}
+    assert "ix_llm_call_prompt_hash" in indexes
+    with engine.connect() as conn:
+        assert conn.execute(text("SELECT cost_usd, response FROM llm_call")).one() == (0.5, None)
+    with SessionLocal(bind=engine) as session:
+        assert session.execute(select(SchemaVersion)).scalar_one().version == CURRENT_VERSION == 2

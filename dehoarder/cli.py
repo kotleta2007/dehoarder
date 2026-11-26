@@ -82,9 +82,29 @@ def run(stage: Stage, limit: int | None = typer.Option(None, "--limit")) -> None
     if stage == Stage.scan_snss:
         _run_scan_snss()
         return
+    if stage == Stage.classify:
+        _run_classify()
+        return
 
     typer.echo(f"run {stage.value}: not implemented yet", err=True)
     raise typer.Exit(code=2)
+
+
+def _run_classify() -> None:
+    from dehoarder.classify.classify import classify_scan
+    from dehoarder.jobs.stages import latest_scan_id
+
+    scan_id = latest_scan_id()
+    if scan_id is None:
+        typer.echo("no scan to classify; scan first", err=True)
+        raise typer.Exit(code=1)
+
+    result = classify_scan(scan_id)
+    typer.echo(f"scan {scan_id}")
+    for key in ("known_shop", "unknown_book", "not_book"):
+        typer.echo(f"{key}: {result[key]}")
+    if "warning" in result:
+        typer.echo(f"warning: {result['warning']}", err=True)
 
 
 def _run_scan_snss() -> None:
